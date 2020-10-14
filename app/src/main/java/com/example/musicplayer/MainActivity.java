@@ -31,6 +31,8 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements OnClickListener {
     private Button play;
+    private ArrayList <Track> audio;
+    private MusicControls musicControls;
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,38 +40,15 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
         setContentView(R.layout.activity_main);
         play = (Button) findViewById(R.id.btnPlay);
         play.setOnClickListener(this);
+        musicControls = new MusicControls();
+        getTracks();
+        buildTable(audio);
 
     }
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void onClick (View v){
         if (play.equals(v)){
-
-            ArrayList <Track> audio=new ArrayList<Track>();
-            Cursor musicCursor=getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null, null, null, null);
-            if (musicCursor!=null && musicCursor.moveToFirst()) {
-                int titleColumn = musicCursor.getColumnIndex
-                        (android.provider.MediaStore.Audio.Media.TITLE);
-                int idColumn = musicCursor.getColumnIndex
-                        (android.provider.MediaStore.Audio.Media._ID);
-                int artistColumn = musicCursor.getColumnIndex
-                        (android.provider.MediaStore.Audio.Media.ARTIST);
-                int durationColumn = musicCursor.getColumnIndex
-                        (MediaStore.Audio.Media.DURATION);
-                int dataColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATA);
-                int sizeColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.SIZE);
-
-                do {
-                    long thisId = musicCursor.getLong(idColumn);
-                    String thisTitle = musicCursor.getString(titleColumn);
-                    String thisArtist = musicCursor.getString(artistColumn);
-                    String thisData = musicCursor.getString(dataColumn);
-                    String thisSize = musicCursor.getString(sizeColumn);
-                    String thisDuration = musicCursor.getString(durationColumn);
-                    audio.add(new Track(thisId, thisTitle, thisArtist, thisData, thisDuration,thisSize));
-                }
-                while (musicCursor.moveToNext());
-            }
-            buildTable(audio);
+            musicControls.MusicPlay();
         }
     }
     public void buildTable(final ArrayList<Track> audio){
@@ -85,7 +64,6 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
                     TableLayout.LayoutParams.MATCH_PARENT,
                     TableLayout.LayoutParams.WRAP_CONTENT));
             textArray[i] = new TextView(this);
-            textArray[i].setId(i+111);
             textArray[i].setText(audio.get(i).getData());
             textArray[i].setTextColor(Color.WHITE);
             textArray[i].setPadding(5, 5, 5, 5);
@@ -100,22 +78,41 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
                 @Override
                 public void onClick(View v) {
                     Uri myUri = Uri.parse(audio.get(current).getData());
-                    MediaPlayer mediaPlayer = new MediaPlayer();
-                    try {
-                        mediaPlayer.setDataSource(String.valueOf(myUri));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    try {
-                        mediaPlayer.prepare();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    mediaPlayer.start();
+                    musicControls.NewMusicPlay(myUri);
                 }
             });
         }
 
+    }
+    public void getTracks(){
+        audio=new ArrayList<Track>();
+        Cursor musicCursor=getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null, null, null, null);
+        if (musicCursor!=null && musicCursor.moveToFirst()) {
+            int titleColumn = musicCursor.getColumnIndex
+                    (android.provider.MediaStore.Audio.Media.TITLE);
+            int idColumn = musicCursor.getColumnIndex
+                    (android.provider.MediaStore.Audio.Media._ID);
+            int artistColumn = musicCursor.getColumnIndex
+                    (android.provider.MediaStore.Audio.Media.ARTIST);
+            int durationColumn = musicCursor.getColumnIndex
+                    (MediaStore.Audio.Media.DURATION);
+            int dataColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATA);
+            int sizeColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.SIZE);
+
+            do {
+                long thisId = musicCursor.getLong(idColumn);
+                String thisTitle = musicCursor.getString(titleColumn);
+                String thisArtist = musicCursor.getString(artistColumn);
+                String thisData = musicCursor.getString(dataColumn);
+                String thisSize = musicCursor.getString(sizeColumn);
+                String thisDuration = musicCursor.getString(durationColumn);
+                audio.add(new Track(thisId, thisTitle, thisArtist, thisData, thisDuration,thisSize));
+            }
+            while (musicCursor.moveToNext());
+        }
+    }
+    public void onBtnPauseClick(View view){
+        musicControls.MusicPause();
     }
 }
 
